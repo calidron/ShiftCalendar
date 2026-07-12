@@ -2,6 +2,7 @@ import {
   dayKey,
   parseDayKey,
   formatHours,
+  hourWord,
   isSameWeek,
   weekStart,
   shiftWeek,
@@ -364,9 +365,11 @@ function renderSummary() {
 }
 
 function overtimeHintHtml(hours) {
-  const regular = formatHours(regularHours(hours), 1);
-  const overtime = formatHours(overtimeHours(hours), 1);
-  return `<span class="overtime-hint-num">${regular}</span> hours regular + <span class="overtime-hint-num overtime-hint-ot">${overtime}</span> hours overtime`;
+  const regularAmount = regularHours(hours);
+  const overtimeAmount = overtimeHours(hours);
+  const regular = formatHours(regularAmount, 1);
+  const overtime = formatHours(overtimeAmount, 1);
+  return `<span class="overtime-hint-num">${regular}</span> ${hourWord(regularAmount)} regular + <span class="overtime-hint-num overtime-hint-ot">${overtime}</span> ${hourWord(overtimeAmount)} overtime`;
 }
 
 function summaryRow(title, value, tone = '') {

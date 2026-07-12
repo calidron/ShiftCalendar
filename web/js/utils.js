@@ -29,6 +29,10 @@ export function formatHours(hours, precision = 2) {
   return Number.isInteger(snapped) ? String(snapped) : snapped.toFixed(precision);
 }
 
+export function hourWord(hours) {
+  return Number(formatHours(hours, 1)) === 1 ? 'hour' : 'hours';
+}
+
 export function isSameDay(a, b) {
   return dayKey(a) === dayKey(b);
 }

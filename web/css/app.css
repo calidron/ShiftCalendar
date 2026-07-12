@@ -349,6 +349,7 @@ textarea {
   background: var(--off);
   color: var(--text-muted);
   font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 50%, transparent);
 }
 
 .legend,
@@ -513,13 +514,18 @@ textarea {
 }
 
 .tab-icon {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.tab-btn[data-tab="summary"] .tab-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .tab-btn.active {
