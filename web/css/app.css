@@ -408,6 +408,12 @@ textarea {
   color: var(--night);
 }
 
+.travel-shift-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--travel);
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
