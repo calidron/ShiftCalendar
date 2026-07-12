@@ -110,6 +110,23 @@ export function overtimeHours(hours) {
   return Math.max(hours - REGULAR_HOURS_CAP, 0);
 }
 
+export function entryRegularHours(entry) {
+  if (!entry) return 0;
+  if (entry.isTravelTime) return Number(entry.travelRegular) || 0;
+  return regularHours(entry.hours);
+}
+
+export function entryOvertimeHours(entry) {
+  if (!entry) return 0;
+  if (entry.isTravelTime) return Number(entry.travelOvertime) || 0;
+  return overtimeHours(entry.hours);
+}
+
+export function entryHasOvertime(entry) {
+  if (!entry || entry.hours <= 0) return false;
+  return entryOvertimeHours(entry) > 0;
+}
+
 export function isDayOff(date, entry) {
   const day = startOfDay(date);
   const today = startOfDay(new Date());
@@ -157,11 +174,11 @@ export function sumHours(items) {
 }
 
 export function sumRegular(items) {
-  return items.reduce((total, entry) => total + regularHours(entry.hours), 0);
+  return items.reduce((total, entry) => total + entryRegularHours(entry), 0);
 }
 
 export function sumOvertime(items) {
-  return items.reduce((total, entry) => total + overtimeHours(entry.hours), 0);
+  return items.reduce((total, entry) => total + entryOvertimeHours(entry), 0);
 }
 
 export function filterEntriesByMonth(entriesByDay, date) {

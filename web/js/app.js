@@ -21,6 +21,8 @@ import {
   sumOvertime,
   overtimeHours,
   regularHours,
+  entryHasOvertime,
+  entryOvertimeHours,
   filterEntriesByMonth,
   filterEntriesByYear,
   REGULAR_HOURS_CAP,
@@ -69,14 +71,21 @@ function iconNightShift(className = 'tab-icon') {
   </svg>`;
 }
 
-function dayCellClasses({ today, outside, multi, off, hours, isNight, overtime }) {
+function iconTravelTime(className = 'tab-icon') {
+  return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"></path>
+  </svg>`;
+}
+
+function dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, overtime }) {
   const classes = ['day-cell'];
   if (today) classes.push('today');
   if (outside) classes.push('outside-month');
   if (multi) classes.push('multi-selected');
   if (off) classes.push('day-off');
   if (hours > 0) {
-    classes.push('has-hours', isNight ? 'night-shift' : 'day-shift');
+    if (isTravel) classes.push('has-hours', 'travel-shift');
+    else classes.push('has-hours', isNight ? 'night-shift' : 'day-shift');
     if (overtime) classes.push('overtime');
   }
   return classes.join(' ');
@@ -200,6 +209,7 @@ function renderCalendar() {
       <div class="legend">
         <span class="legend-item"><span class="dot" style="background:var(--day)"></span>Day shift</span>
         <span class="legend-item"><span class="dot" style="background:var(--night)"></span>Night shift</span>
+        <span class="legend-item"><span class="dot" style="background:var(--travel)"></span>Travel time</span>
         <span class="legend-item"><span class="dot" style="box-shadow:inset 0 0 0 1.5px var(--danger)"></span>Overtime</span>
         <span class="legend-item"><span class="dot day-off-dot"></span>Day off</span>
         ${state.selectMode ? '<span class="legend-item"><span class="dot" style="background:#2563eb"></span>Selected</span>' : ''}
@@ -240,12 +250,13 @@ function renderDayCell(day, entries, index, month) {
   const entry = entries[key];
   const hours = entry?.hours || 0;
   const isNight = !!entry?.isNightShift;
+  const isTravel = !!entry?.isTravelTime;
   const hasNotes = !!entry?.notes;
   const today = dayKey(day) === dayKey(new Date());
   const outside = day.getMonth() !== month.getMonth();
   const multi = state.multiSelected.has(key);
   const off = isDayOff(day, entry);
-  const overtime = hours > REGULAR_HOURS_CAP;
+  const overtime = entry ? entryHasOvertime(entry) : false;
 
   let badge = '<span style="height:12px"></span>';
   if (hours > 0) {
@@ -256,7 +267,7 @@ function renderDayCell(day, entries, index, month) {
 
   return `
     <div
-      class="${dayCellClasses({ today, outside, multi, off, hours, isNight, overtime })}"
+      class="${dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, overtime })}"
       data-day="${key}"
       data-index="${index}"
       role="button"
@@ -381,7 +392,7 @@ function summaryRow(title, value, tone = '') {
 
 function entryRow(entry) {
   const date = parseDayKey(entry.date).toLocaleDateString();
-  const ot = overtimeHours(entry.hours) > 0 ? `<div class="meta overtime-ot">+${formatHours(overtimeHours(entry.hours))} OT</div>` : '';
+  const ot = entryOvertimeHours(entry) > 0 ? `<div class="meta overtime-ot">+${formatHours(entryOvertimeHours(entry))} OT</div>` : '';
   return `
     <div class="list-row">
       <div>
@@ -435,6 +446,35 @@ function restoreYearModalScroll(sheet) {
   });
 }
 
+function travelSplitHintHtml(regular, overtime) {
+  return `<span class="overtime-hint-num">${formatHours(regular, 1)}</span> ${hourWord(regular)} regular + <span class="overtime-hint-num overtime-hint-ot">${formatHours(overtime, 1)}</span> ${hourWord(overtime)} overtime`;
+}
+
+function splitHoursFieldHtml(id, label, value, labelClass = '') {
+  return `
+    <div class="form-group hours-worked-group">
+      <label class="${labelClass}">${label}</label>
+      <div class="range-row">
+        <button class="stepper-btn" data-action="${id}-minus" type="button" aria-label="Decrease ${label.toLowerCase()}">${iconMinus()}</button>
+        <div class="hours-input-field">
+          <input
+            id="${id}-input"
+            class="hours-input"
+            type="text"
+            inputmode="decimal"
+            enterkeyhint="done"
+            autocomplete="off"
+            value="${formatHours(value, 1)}"
+            aria-label="${label}"
+          />
+        </div>
+        <button class="stepper-btn" data-action="${id}-plus" type="button" aria-label="Increase ${label.toLowerCase()}">${iconPlus()}</button>
+      </div>
+      <input id="${id}-slider" class="hours-slider" type="range" min="0" max="24" step="${HOURS_STEP}" value="${value}" />
+    </div>
+  `;
+}
+
 function openLogModal(dates, { returnToYearView = false } = {}) {
   if (returnToYearView) captureYearModalScroll();
   const list = Array.isArray(dates) ? dates : [dates];
@@ -445,11 +485,17 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   let hours = state.data.settings.lastHours || 8;
   let notes = '';
   let isNightShift = nightShiftDefault(state.data, primary);
+  let isTravelTime = false;
+  let travelRegular = regularHours(hours);
+  let travelOvertime = overtimeHours(hours);
 
   if (!bulk && existing) {
     hours = existing.hours;
     notes = existing.notes;
     isNightShift = existing.isNightShift;
+    isTravelTime = !!existing.isTravelTime;
+    travelRegular = isTravelTime ? (existing.travelRegular || 0) : regularHours(hours);
+    travelOvertime = isTravelTime ? (existing.travelOvertime || 0) : overtimeHours(hours);
   }
 
   const dismiss = (changed = false) => {
@@ -463,37 +509,46 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   };
 
   ui.modalRoot.innerHTML = `
-    <div class="modal-backdrop open log-modal ${isNightShift ? 'shift-night' : 'shift-day'}" data-modal="log">
+    <div class="modal-backdrop open log-modal ${isNightShift ? 'shift-night' : 'shift-day'}${isTravelTime ? ' travel-mode' : ''}" data-modal="log">
       <div class="modal-sheet">
         <div class="modal-header">
           <strong>${bulk ? `Fill ${list.length} days` : parseDayKey(dayKey(primary)).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' })}</strong>
           <button class="icon-btn" data-action="close-modal" type="button" aria-label="Close">${iconClose()}</button>
         </div>
 
-        <div class="form-group">
+        <div class="form-group toggle-row">
           <button class="chip-btn night-toggle ${isNightShift ? 'active' : ''}" data-action="toggle-night" type="button">${iconNightShift()} Night Shift</button>
+          <button class="chip-btn travel-toggle ${isTravelTime ? 'active' : ''}" data-action="toggle-travel" type="button">${iconTravelTime()} Travel Time</button>
         </div>
 
-        <div class="form-group hours-worked-group">
-          <label>Hours Worked</label>
-          <div class="range-row">
-            <button class="stepper-btn" data-action="hours-minus" type="button" aria-label="Decrease hours">${iconMinus()}</button>
-            <div class="hours-input-field">
-              <input
-                id="hours-input"
-                class="hours-input"
-                type="text"
-                inputmode="decimal"
-                enterkeyhint="done"
-                autocomplete="off"
-                value="${formatHours(hours, 1)}"
-                aria-label="Hours worked"
-              />
+        <div id="hours-single-panel" class="hours-single-panel"${isTravelTime ? ' hidden' : ''}>
+          <div class="form-group hours-worked-group">
+            <label>Hours Worked</label>
+            <div class="range-row">
+              <button class="stepper-btn" data-action="hours-minus" type="button" aria-label="Decrease hours">${iconMinus()}</button>
+              <div class="hours-input-field">
+                <input
+                  id="hours-input"
+                  class="hours-input"
+                  type="text"
+                  inputmode="decimal"
+                  enterkeyhint="done"
+                  autocomplete="off"
+                  value="${formatHours(hours, 1)}"
+                  aria-label="Hours worked"
+                />
+              </div>
+              <button class="stepper-btn" data-action="hours-plus" type="button" aria-label="Increase hours">${iconPlus()}</button>
             </div>
-            <button class="stepper-btn" data-action="hours-plus" type="button" aria-label="Increase hours">${iconPlus()}</button>
+            <input id="hours-slider" class="hours-slider" type="range" min="0" max="24" step="${HOURS_STEP}" value="${hours}" />
+            <p id="overtime-hint" class="hint overtime-hint"${hours > REGULAR_HOURS_CAP ? '' : ' hidden'}>${hours > REGULAR_HOURS_CAP ? overtimeHintHtml(hours) : ''}</p>
           </div>
-          <input id="hours-slider" class="hours-slider" type="range" min="0" max="24" step="${HOURS_STEP}" value="${hours}" />
-          <p id="overtime-hint" class="hint overtime-hint"${hours > REGULAR_HOURS_CAP ? '' : ' hidden'}>${hours > REGULAR_HOURS_CAP ? overtimeHintHtml(hours) : ''}</p>
+        </div>
+
+        <div id="hours-split-panel" class="hours-split-panel"${isTravelTime ? '' : ' hidden'}>
+          ${splitHoursFieldHtml('regular-hours', 'Regular Hours', travelRegular)}
+          ${splitHoursFieldHtml('overtime-hours', 'Overtime Hours', travelOvertime, 'label-overtime')}
+          <p id="travel-split-hint" class="hint overtime-hint travel-split-hint">${travelSplitHintHtml(travelRegular, travelOvertime)}</p>
         </div>
 
         <div class="form-group">
@@ -514,16 +569,49 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   const modal = ui.modalRoot.querySelector('[data-modal="log"]');
   let currentHours = hours;
   let currentNight = isNightShift;
-  const hoursInput = modal.querySelector('#hours-input');
+  let currentTravel = isTravelTime;
+  let currentRegular = travelRegular;
+  let currentOvertime = travelOvertime;
+  let savedTravelRegular = travelRegular;
+  let savedTravelOvertime = travelOvertime;
 
-  const parseHoursInput = (value) => {
+  const hoursInput = modal.querySelector('#hours-input');
+  const regularInput = modal.querySelector('#regular-hours-input');
+  const overtimeInput = modal.querySelector('#overtime-hours-input');
+  const singlePanel = modal.querySelector('#hours-single-panel');
+  const splitPanel = modal.querySelector('#hours-split-panel');
+
+  const parseHoursInput = (value, fallback) => {
     const cleaned = String(value).trim().replace(/[^\d.]/g, '');
     const parsed = Number(cleaned);
-    return Number.isFinite(parsed) ? parsed : currentHours;
+    return Number.isFinite(parsed) ? parsed : fallback;
   };
 
-  const commitHoursInput = () => {
-    updateHours(parseHoursInput(hoursInput.value));
+  const clampSplitTotal = (regular, overtime) => {
+    let reg = snapHours(Math.max(0, regular));
+    let ot = snapHours(Math.max(0, overtime));
+    if (reg + ot > 24) {
+      ot = snapHours(Math.max(0, 24 - reg));
+    }
+    return { reg, ot };
+  };
+
+  const updateSplitHint = () => {
+    const hint = modal.querySelector('#travel-split-hint');
+    if (hint) hint.innerHTML = travelSplitHintHtml(currentRegular, currentOvertime);
+  };
+
+  const updateSplitHours = (regular, overtime) => {
+    const clamped = clampSplitTotal(regular, overtime);
+    currentRegular = clamped.reg;
+    currentOvertime = clamped.ot;
+    savedTravelRegular = currentRegular;
+    savedTravelOvertime = currentOvertime;
+    if (regularInput) regularInput.value = formatHours(currentRegular, 1);
+    if (overtimeInput) overtimeInput.value = formatHours(currentOvertime, 1);
+    if (modal.querySelector('#regular-hours-slider')) modal.querySelector('#regular-hours-slider').value = currentRegular;
+    if (modal.querySelector('#overtime-hours-slider')) modal.querySelector('#overtime-hours-slider').value = currentOvertime;
+    updateSplitHint();
   };
 
   const updateHours = (value) => {
@@ -540,18 +628,68 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
     }
   };
 
-  hoursInput.addEventListener('focus', () => {
-    requestAnimationFrame(() => hoursInput.select());
-  });
+  const commitHoursInput = () => {
+    updateHours(parseHoursInput(hoursInput.value, currentHours));
+  };
 
-  hoursInput.addEventListener('blur', commitHoursInput);
+  const commitRegularInput = () => {
+    updateSplitHours(parseHoursInput(regularInput.value, currentRegular), currentOvertime);
+  };
 
-  hoursInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      hoursInput.blur();
+  const commitOvertimeInput = () => {
+    updateSplitHours(currentRegular, parseHoursInput(overtimeInput.value, currentOvertime));
+  };
+
+  const syncTravelFromSingle = () => {
+    currentRegular = regularHours(currentHours);
+    currentOvertime = overtimeHours(currentHours);
+    updateSplitHours(currentRegular, currentOvertime);
+  };
+
+  const syncSingleFromTravel = () => {
+    currentHours = snapHours(Math.min(24, currentRegular + currentOvertime));
+    updateHours(currentHours);
+  };
+
+  const setTravelMode = (enabled) => {
+    if (!enabled) {
+      savedTravelRegular = currentRegular;
+      savedTravelOvertime = currentOvertime;
     }
-  });
+
+    currentTravel = enabled;
+    modal.classList.toggle('travel-mode', enabled);
+    modal.querySelector('[data-action="toggle-travel"]').classList.toggle('active', enabled);
+    singlePanel.hidden = enabled;
+    splitPanel.hidden = !enabled;
+
+    if (enabled) {
+      if (savedTravelRegular + savedTravelOvertime > 0) {
+        updateSplitHours(savedTravelRegular, savedTravelOvertime);
+      } else {
+        syncTravelFromSingle();
+        savedTravelRegular = currentRegular;
+        savedTravelOvertime = currentOvertime;
+      }
+    } else {
+      syncSingleFromTravel();
+    }
+  };
+
+  const bindHoursField = (input, commit) => {
+    input.addEventListener('focus', () => requestAnimationFrame(() => input.select()));
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        input.blur();
+      }
+    });
+  };
+
+  bindHoursField(hoursInput, commitHoursInput);
+  if (regularInput) bindHoursField(regularInput, commitRegularInput);
+  if (overtimeInput) bindHoursField(overtimeInput, commitOvertimeInput);
 
   modal.addEventListener('click', (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;
@@ -570,6 +708,11 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
       return;
     }
 
+    if (action === 'toggle-travel') {
+      setTravelMode(!currentTravel);
+      return;
+    }
+
     if (action === 'hours-minus') {
       updateHours(currentHours - HOURS_STEP);
       return;
@@ -580,17 +723,52 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
       return;
     }
 
-    if (action === 'save-entry') {
-      commitHoursInput();
+    if (action === 'regular-hours-minus') {
+      updateSplitHours(currentRegular - HOURS_STEP, currentOvertime);
+      return;
+    }
 
-      const payload = {
-        hours: currentHours,
-        notes: modal.querySelector('#notes-input').value.trim(),
-        isNightShift: currentNight
-      };
+    if (action === 'regular-hours-plus') {
+      updateSplitHours(currentRegular + HOURS_STEP, currentOvertime);
+      return;
+    }
+
+    if (action === 'overtime-hours-minus') {
+      updateSplitHours(currentRegular, currentOvertime - HOURS_STEP);
+      return;
+    }
+
+    if (action === 'overtime-hours-plus') {
+      updateSplitHours(currentRegular, currentOvertime + HOURS_STEP);
+      return;
+    }
+
+    if (action === 'save-entry') {
+      if (currentTravel) {
+        commitRegularInput();
+        commitOvertimeInput();
+      } else {
+        commitHoursInput();
+      }
+
+      const payload = currentTravel
+        ? {
+            isTravelTime: true,
+            travelRegular: currentRegular,
+            travelOvertime: currentOvertime,
+            hours: snapHours(currentRegular + currentOvertime),
+            notes: modal.querySelector('#notes-input').value.trim(),
+            isNightShift: currentNight
+          }
+        : {
+            isTravelTime: false,
+            hours: currentHours,
+            notes: modal.querySelector('#notes-input').value.trim(),
+            isNightShift: currentNight
+          };
 
       list.forEach((date) => upsertEntry(state.data, date, payload));
-      saveLastHours(state.data, currentHours);
+      saveLastHours(state.data, payload.hours);
       carryNightShiftToNextDay(state.data, list[list.length - 1], currentNight);
 
       state.selectMode = false;
@@ -612,6 +790,14 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
 
   modal.querySelector('#hours-slider').addEventListener('input', (event) => {
     updateHours(Number(event.target.value));
+  });
+
+  modal.querySelector('#regular-hours-slider')?.addEventListener('input', (event) => {
+    updateSplitHours(Number(event.target.value), currentOvertime);
+  });
+
+  modal.querySelector('#overtime-hours-slider')?.addEventListener('input', (event) => {
+    updateSplitHours(currentRegular, Number(event.target.value));
   });
 
   modal.addEventListener('click', (event) => {
@@ -721,13 +907,14 @@ function renderYearMonths(year) {
             const entry = state.data.entries[key];
             const hours = entry?.hours || 0;
             const off = isDayOff(day, entry);
-            const overtime = hours > REGULAR_HOURS_CAP;
+            const isTravel = !!entry?.isTravelTime;
+            const overtime = entry ? entryHasOvertime(entry) : hours > REGULAR_HOURS_CAP;
             const badge = hours > 0
               ? `<span class="badge ${entry.isNightShift ? 'night' : 'day'} ${overtime ? 'overtime' : ''}">${formatHours(hours, 1)}</span>`
               : (off ? '<span class="badge off">off</span>' : '');
             return `
               <div
-                class="${dayCellClasses({ today: false, outside: false, multi: false, off, hours, isNight: !!entry?.isNightShift, overtime })}"
+                class="${dayCellClasses({ today: false, outside: false, multi: false, off, hours, isNight: !!entry?.isNightShift, isTravel, overtime })}"
                 data-year-day="${key}"
                 role="button"
                 tabindex="0"
