@@ -363,13 +363,22 @@ function renderSummary() {
   bindSummaryEvents();
 }
 
+function overtimeHintHtml(hours) {
+  const regular = formatHours(regularHours(hours), 1);
+  const overtime = formatHours(overtimeHours(hours), 1);
+  return `<span class="overtime-hint-num">${regular}</span> hours regular + <span class="overtime-hint-num overtime-hint-ot">${overtime}</span> hours overtime`;
+}
+
 function summaryRow(title, value, tone = '') {
-  return `<div class="list-row spread"><span>${title}</span><strong class="summary-value ${tone}">${value}</strong></div>`;
+  const display = value.endsWith(' hrs')
+    ? `<span class="summary-num">${value.slice(0, -4)}</span><span class="summary-unit"> hrs</span>`
+    : value;
+  return `<div class="list-row spread"><span>${title}</span><strong class="summary-value ${tone}">${display}</strong></div>`;
 }
 
 function entryRow(entry) {
   const date = parseDayKey(entry.date).toLocaleDateString();
-  const ot = overtimeHours(entry.hours) > 0 ? `<div class="meta" style="color:#f97316">+${formatHours(overtimeHours(entry.hours))} OT</div>` : '';
+  const ot = overtimeHours(entry.hours) > 0 ? `<div class="meta overtime-ot">+${formatHours(overtimeHours(entry.hours))} OT</div>` : '';
   return `
     <div class="list-row">
       <div>
@@ -451,7 +460,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   };
 
   ui.modalRoot.innerHTML = `
-    <div class="modal-backdrop open" data-modal="log">
+    <div class="modal-backdrop open log-modal ${isNightShift ? 'shift-night' : 'shift-day'}" data-modal="log">
       <div class="modal-sheet">
         <div class="modal-header">
           <strong>${bulk ? `Fill ${list.length} days` : parseDayKey(dayKey(primary)).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' })}</strong>
@@ -462,7 +471,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
           <button class="chip-btn night-toggle ${isNightShift ? 'active' : ''}" data-action="toggle-night" type="button">${iconNightShift()} Night Shift</button>
         </div>
 
-        <div class="form-group">
+        <div class="form-group hours-worked-group">
           <label>Hours Worked</label>
           <div class="range-row">
             <button class="stepper-btn" data-action="hours-minus" type="button" aria-label="Decrease hours">${iconMinus()}</button>
@@ -477,12 +486,11 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
                 value="${formatHours(hours, 1)}"
                 aria-label="Hours worked"
               />
-              <span class="hours-input-suffix">hrs</span>
             </div>
             <button class="stepper-btn" data-action="hours-plus" type="button" aria-label="Increase hours">${iconPlus()}</button>
           </div>
-          <input id="hours-slider" class="form-control" type="range" min="0" max="24" step="${HOURS_STEP}" value="${hours}" />
-          <p id="overtime-hint" class="hint overtime-hint"${hours > REGULAR_HOURS_CAP ? '' : ' hidden'}>${hours > REGULAR_HOURS_CAP ? `${formatHours(regularHours(hours), 1)} hrs regular + ${formatHours(overtimeHours(hours), 1)} hrs overtime` : ''}</p>
+          <input id="hours-slider" class="hours-slider" type="range" min="0" max="24" step="${HOURS_STEP}" value="${hours}" />
+          <p id="overtime-hint" class="hint overtime-hint"${hours > REGULAR_HOURS_CAP ? '' : ' hidden'}>${hours > REGULAR_HOURS_CAP ? overtimeHintHtml(hours) : ''}</p>
         </div>
 
         <div class="form-group">
@@ -522,7 +530,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
 
     const hint = modal.querySelector('#overtime-hint');
     if (currentHours > REGULAR_HOURS_CAP) {
-      hint.textContent = `${formatHours(regularHours(currentHours), 1)} hrs regular + ${formatHours(overtimeHours(currentHours), 1)} hrs overtime`;
+      hint.innerHTML = overtimeHintHtml(currentHours);
       hint.hidden = false;
     } else {
       hint.hidden = true;
@@ -553,6 +561,8 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
 
     if (action === 'toggle-night') {
       currentNight = !currentNight;
+      modal.classList.toggle('shift-night', currentNight);
+      modal.classList.toggle('shift-day', !currentNight);
       modal.querySelector('[data-action="toggle-night"]').classList.toggle('active', currentNight);
       return;
     }

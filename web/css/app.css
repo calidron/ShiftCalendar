@@ -9,6 +9,7 @@
   --day: #f97316;
   --night: #6366f1;
   --danger: #ef4444;
+  --week-row: rgba(120, 120, 128, 0.16);
   --off: #d1d5db;
   --border: rgba(60, 60, 67, 0.12);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -22,6 +23,7 @@
   --text: #f5f5f7;
   --text-muted: #a1a1aa;
   --accent: #0a84ff;
+  --week-row: rgba(120, 120, 128, 0.28);
   --off: #3f3f46;
   --border: rgba(255, 255, 255, 0.08);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -235,8 +237,8 @@ textarea {
 }
 
 .week-row-wrap.selected-week {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--week-row);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 38%, transparent);
 }
 
 .day-cell {
@@ -472,8 +474,16 @@ textarea {
   color: #22c55e;
 }
 
+.list-row .summary-value.green .summary-unit {
+  color: var(--text);
+}
+
 .list-row .summary-value.red {
   color: var(--danger);
+}
+
+.list-row .summary-value.red .summary-unit {
+  color: var(--text);
 }
 
 .tabbar {
@@ -516,10 +526,24 @@ textarea {
   color: var(--accent);
 }
 
+.list-row .meta.overtime-ot {
+  color: var(--danger);
+}
+
 .overtime-hint {
-  color: #f97316;
+  color: var(--text-muted);
   margin-top: 8px;
   min-height: 1.25em;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.overtime-hint-num {
+  font-weight: 700;
+}
+
+.overtime-hint-num.overtime-hint-ot {
+  color: var(--danger);
 }
 
 .overtime-hint[hidden] {
@@ -571,6 +595,10 @@ textarea {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-bottom: 8px;
+}
+
+.hours-worked-group label {
+  text-align: center;
 }
 
 .form-control {
@@ -626,7 +654,7 @@ textarea {
 }
 
 .hours-input {
-  width: 4.25rem;
+  width: 5rem;
   border: none;
   background: transparent;
   color: var(--text);
@@ -644,11 +672,75 @@ textarea {
   background: var(--surface-2);
 }
 
-.hours-input-suffix {
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text);
+.hours-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--log-accent, var(--accent));
+}
+
+.hours-slider:focus {
+  outline: none;
+}
+
+.hours-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.hours-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border: none;
+  border-radius: 50%;
+  background: var(--log-accent, var(--accent));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.hours-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: none;
+}
+
+.hours-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--log-accent, var(--accent));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.log-modal {
+  --log-accent: var(--day);
+}
+
+.log-modal.shift-night {
+  --log-accent: var(--night);
+}
+
+.log-modal.shift-day .overtime-hint {
+  color: var(--day);
+}
+
+.log-modal.shift-night .chip-btn.night-toggle.active {
+  background: color-mix(in srgb, var(--night) 20%, transparent);
+  color: var(--night);
+  border: 1px solid color-mix(in srgb, var(--night) 35%, transparent);
+}
+
+.log-modal.shift-night .overtime-hint {
+  color: var(--night);
 }
 
 .chip-btn,
@@ -666,6 +758,11 @@ textarea {
   font-weight: 600;
 }
 
+.log-modal .primary-btn {
+  background: var(--log-accent);
+  color: #fff;
+}
+
 .danger-btn {
   background: color-mix(in srgb, var(--danger) 15%, transparent);
   color: var(--danger);
@@ -677,16 +774,11 @@ textarea {
   color: var(--text);
 }
 
-.chip-btn.active {
-  background: color-mix(in srgb, var(--night) 20%, transparent);
-  color: var(--night);
-  border: 1px solid color-mix(in srgb, var(--night) 35%, transparent);
-}
-
 .chip-btn.night-toggle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  border: 1px solid transparent;
 }
 
 .chip-btn.night-toggle .tab-icon {
