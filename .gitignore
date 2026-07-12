@@ -1,0 +1,11 @@
+# iOS app (not part of this repo)
+timesht/
+timesht.xcodeproj/
+timeshtTests/
+timeshtUITests/
+
+# PWA tooling
+web/.pylibs/
+
+# macOS
+.DS_Store
