@@ -396,7 +396,7 @@ function entryRow(entry) {
   return `
     <div class="list-row">
       <div>
-        <div class="entry-title">${date}${entry.notes ? ' *' : ''}${entry.isNightShift ? `<span class="night-shift-mark">${iconNightShift('legend-icon')}</span>` : ''}</div>
+        <div class="entry-title">${date}${entry.notes ? ' *' : ''}${entry.isNightShift ? `<span class="night-shift-mark">${iconNightShift('legend-icon')}</span>` : ''}${entry.isTravelTime ? `<span class="travel-shift-mark">${iconTravelTime('legend-icon')}</span>` : ''}</div>
         ${entry.notes ? `<div class="meta">${escapeHtml(entry.notes)}</div>` : ''}
       </div>
       <div style="text-align:right">
