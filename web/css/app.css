@@ -8,6 +8,7 @@
   --accent: #007aff;
   --day: #f97316;
   --night: #6366f1;
+  --travel: #06b6d4;
   --danger: #ef4444;
   --week-row: rgba(120, 120, 128, 0.16);
   --off: #d1d5db;
@@ -293,6 +294,11 @@ textarea {
   border-color: color-mix(in srgb, var(--night) 35%, transparent);
 }
 
+.day-cell.has-hours.travel-shift {
+  background: color-mix(in srgb, var(--travel) 18%, transparent);
+  border-color: color-mix(in srgb, var(--travel) 35%, transparent);
+}
+
 .day-cell.has-hours.overtime {
   border: 2px dotted var(--danger);
 }
@@ -361,6 +367,7 @@ textarea {
 .legend {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -600,6 +607,54 @@ textarea {
 
 .hours-worked-group label {
   text-align: center;
+}
+
+.toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hours-split-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hours-split-panel[hidden],
+.hours-single-panel[hidden] {
+  display: none;
+}
+
+.label-overtime {
+  color: var(--danger);
+}
+
+.travel-split-hint {
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.log-modal.travel-mode .travel-split-hint {
+  color: var(--travel);
+}
+
+.chip-btn.travel-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+}
+
+.log-modal .chip-btn.travel-toggle.active {
+  background: color-mix(in srgb, var(--travel) 16%, transparent);
+  color: var(--travel);
+  border: 1px solid color-mix(in srgb, var(--travel) 35%, transparent);
+}
+
+.chip-btn.travel-toggle .tab-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .form-control {
