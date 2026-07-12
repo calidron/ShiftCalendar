@@ -523,11 +523,6 @@ textarea {
   stroke-linejoin: round;
 }
 
-.tab-btn[data-tab="summary"] .tab-icon {
-  width: 28px;
-  height: 28px;
-}
-
 .tab-btn.active {
   color: var(--accent);
 }
