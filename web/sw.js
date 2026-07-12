@@ -1,4 +1,4 @@
-const CACHE = 'shiftcalendar-v38';
+const CACHE = 'shiftcalendar-v39';
 const ASSETS = [
   './',
   './index.html',
