@@ -52,6 +52,8 @@ import {
   allEntriesSorted
 } from './store.js';
 
+import { initAnalytics, trackPage } from './analytics.js';
+
 function iconChevron(direction) {
   const points = direction === 'left' ? '15 6 9 12 15 18' : '9 6 15 12 9 18';
   return `<svg class="icon-btn-glyph" viewBox="0 0 24 24" aria-hidden="true"><polyline points="${points}"></polyline></svg>`;
@@ -174,6 +176,8 @@ function setTab(tab) {
   } else if (tab === 'summary') {
     renderSummary();
   }
+
+  if (previousTab !== tab) trackPage(tab);
 }
 
 function bindHorizontalSwipe(element, onSwipe, { disabled = () => false } = {}) {
@@ -1344,4 +1348,6 @@ document.addEventListener('touchend', (event) => {
   lastTouchEnd = now;
 }, { passive: false });
 
+initAnalytics();
 renderAll();
+trackPage('calendar');
