@@ -204,6 +204,37 @@ export function dayOffCountInYear(year, entriesByDay) {
   return count;
 }
 
+export function vacationCountInMonth(monthDate, entriesByDay) {
+  const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const last = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+  let count = 0;
+
+  for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+    const day = startOfDay(d);
+    if (!isElapsedDay(day)) continue;
+    const entry = entriesByDay[dayKey(day)];
+    if (entry?.isVacation) count += 1;
+  }
+
+  return count;
+}
+
+export function vacationCountInYear(year, entriesByDay) {
+  let count = 0;
+  for (let month = 0; month < 12; month += 1) {
+    count += vacationCountInMonth(new Date(year, month, 1), entriesByDay);
+  }
+  return count;
+}
+
+export function daysOffAndVacCountInMonth(monthDate, entriesByDay) {
+  return dayOffCountInMonth(monthDate, entriesByDay) + vacationCountInMonth(monthDate, entriesByDay);
+}
+
+export function daysOffAndVacCountInYear(year, entriesByDay) {
+  return dayOffCountInYear(year, entriesByDay) + vacationCountInYear(year, entriesByDay);
+}
+
 export function entriesInWeek(date, entriesByDay) {
   const start = weekStart(date).getTime();
   const end = start + 7 * 86400000;

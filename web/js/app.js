@@ -17,6 +17,8 @@ import {
   isDayOff,
   dayOffCountInMonth,
   dayOffCountInYear,
+  daysOffAndVacCountInMonth,
+  daysOffAndVacCountInYear,
   entriesInWeek,
   sumHours,
   projectDayCountInMonth,
@@ -381,8 +383,8 @@ function renderSummary() {
       <section>
         <h2 class="section-title">Days Off</h2>
         <div class="list-card">
-          ${summaryRow(monthLabel(state.summaryMonth), `${dayOffCountInMonth(state.summaryMonth, state.data.entries)} days`, '', { digitsOnly: true })}
-          ${summaryRow(String(state.summaryMonth.getFullYear()), `${dayOffCountInYear(state.summaryMonth.getFullYear(), state.data.entries)} days`, '', { digitsOnly: true })}
+          ${summaryRow(monthLabel(state.summaryMonth), `${daysOffAndVacCountInMonth(state.summaryMonth, state.data.entries)} days`, '', { digitsOnly: true })}
+          ${summaryRow(String(state.summaryMonth.getFullYear()), `${daysOffAndVacCountInYear(state.summaryMonth.getFullYear(), state.data.entries)} days`, '', { digitsOnly: true })}
         </div>
       </section>
 
