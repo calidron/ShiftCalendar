@@ -3,6 +3,7 @@ import {
   parseDayKey,
   formatHours,
   hourWord,
+  dayOffSummary,
   isSameWeek,
   weekStart,
   shiftWeek,
@@ -21,7 +22,6 @@ import {
   sumOvertime,
   overtimeHours,
   regularHours,
-  entryHasOvertime,
   entryOvertimeHours,
   filterEntriesByMonth,
   filterEntriesByYear,
@@ -77,7 +77,7 @@ function iconTravelTime(className = 'tab-icon') {
   </svg>`;
 }
 
-function dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, overtime }) {
+function dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel }) {
   const classes = ['day-cell'];
   if (today) classes.push('today');
   if (outside) classes.push('outside-month');
@@ -86,9 +86,13 @@ function dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, 
   if (hours > 0) {
     if (isTravel) classes.push('has-hours', 'travel-shift');
     else classes.push('has-hours', isNight ? 'night-shift' : 'day-shift');
-    if (overtime) classes.push('overtime');
   }
   return classes.join(' ');
+}
+
+function shiftBadgeClass(isTravel, isNight) {
+  if (isTravel) return 'travel';
+  return isNight ? 'night' : 'day';
 }
 
 const ui = {
@@ -210,7 +214,6 @@ function renderCalendar() {
         <span class="legend-item"><span class="dot" style="background:var(--day)"></span>Day shift</span>
         <span class="legend-item"><span class="dot" style="background:var(--night)"></span>Night shift</span>
         <span class="legend-item"><span class="dot" style="background:var(--travel)"></span>Travel time</span>
-        <span class="legend-item"><span class="dot" style="box-shadow:inset 0 0 0 1.5px var(--danger)"></span>Overtime</span>
         <span class="legend-item"><span class="dot day-off-dot"></span>Day off</span>
         ${state.selectMode ? '<span class="legend-item"><span class="dot" style="background:#2563eb"></span>Selected</span>' : ''}
       </div>
@@ -256,18 +259,17 @@ function renderDayCell(day, entries, index, month) {
   const outside = day.getMonth() !== month.getMonth();
   const multi = state.multiSelected.has(key);
   const off = isDayOff(day, entry);
-  const overtime = entry ? entryHasOvertime(entry) : false;
 
   let badge = '<span style="height:12px"></span>';
   if (hours > 0) {
-    badge = `<span class="badge ${isNight ? 'night' : 'day'} ${overtime ? 'overtime' : ''}">${formatHours(hours, 1)}</span>`;
+    badge = `<span class="badge ${shiftBadgeClass(isTravel, isNight)}">${formatHours(hours, 1)}</span>`;
   } else if (off) {
     badge = '<span class="badge off">off</span>';
   }
 
   return `
     <div
-      class="${dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, overtime })}"
+      class="${dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel })}"
       data-day="${key}"
       data-index="${index}"
       role="button"
@@ -880,7 +882,7 @@ function renderYearSummary(year) {
       ${statBox('Total', formatHours(sumHours(yearItems), 1))}
       ${statBox('Regular', formatHours(sumRegular(yearItems), 1), 'green')}
       ${statBox('Overtime', formatHours(sumOvertime(yearItems), 1), 'red')}
-      ${statBox('Days Off', String(dayOffCountInYear(year, state.data.entries)), 'muted')}
+      ${statBox('Days Off', String(dayOffCountInYear(year, state.data.entries)))}
     </div>
   `;
 }
@@ -897,7 +899,7 @@ function renderYearMonths(year) {
       <section class="month-block">
         <button class="row spread" data-month="${year}-${month}" type="button" style="width:100%;border:none;background:transparent;color:inherit;padding:0;margin-bottom:8px;cursor:pointer">
           <strong>${monthLabel(monthDate)}</strong>
-          <span class="hint">${formatHours(sumHours(items), 1)} hrs${dayoffs ? ` · ${dayoffs} dayoffs` : ''}</span>
+          <span class="hint">${formatHours(sumHours(items), 1)} hrs · ${dayOffSummary(dayoffs)}</span>
         </button>
         <div class="compact-grid">
           ${days.map((day) => {
@@ -908,13 +910,12 @@ function renderYearMonths(year) {
             const hours = entry?.hours || 0;
             const off = isDayOff(day, entry);
             const isTravel = !!entry?.isTravelTime;
-            const overtime = entry ? entryHasOvertime(entry) : hours > REGULAR_HOURS_CAP;
             const badge = hours > 0
-              ? `<span class="badge ${entry.isNightShift ? 'night' : 'day'} ${overtime ? 'overtime' : ''}">${formatHours(hours, 1)}</span>`
+              ? `<span class="badge ${shiftBadgeClass(isTravel, !!entry?.isNightShift)}">${formatHours(hours, 1)}</span>`
               : (off ? '<span class="badge off">off</span>' : '');
             return `
               <div
-                class="${dayCellClasses({ today: false, outside: false, multi: false, off, hours, isNight: !!entry?.isNightShift, isTravel, overtime })}"
+                class="${dayCellClasses({ today: false, outside: false, multi: false, off, hours, isNight: !!entry?.isNightShift, isTravel })}"
                 data-year-day="${key}"
                 role="button"
                 tabindex="0"
