@@ -49,6 +49,23 @@ export function getEntry(state, date) {
 
 export function upsertEntry(state, date, payload) {
   const key = dayKey(date);
+  const isVacation = !!payload.isVacation;
+
+  if (isVacation) {
+    state.entries[key] = {
+      date: key,
+      hours: 0,
+      notes: payload.notes || '',
+      isNightShift: false,
+      isTravelTime: false,
+      travelRegular: 0,
+      travelOvertime: 0,
+      isVacation: true
+    };
+    saveState(state);
+    return;
+  }
+
   const isTravelTime = !!payload.isTravelTime;
   const travelRegular = isTravelTime ? snapHours(payload.travelRegular || 0) : 0;
   const travelOvertime = isTravelTime ? snapHours(payload.travelOvertime || 0) : 0;
@@ -63,7 +80,8 @@ export function upsertEntry(state, date, payload) {
     isNightShift: !!payload.isNightShift,
     isTravelTime,
     travelRegular: isTravelTime ? travelRegular : 0,
-    travelOvertime: isTravelTime ? travelOvertime : 0
+    travelOvertime: isTravelTime ? travelOvertime : 0,
+    isVacation: false
   };
   saveState(state);
 }
@@ -120,7 +138,8 @@ export function exportBackup(state) {
       isNightShift: entry.isNightShift,
       isTravelTime: !!entry.isTravelTime,
       travelRegular: entry.travelRegular || 0,
-      travelOvertime: entry.travelOvertime || 0
+      travelOvertime: entry.travelOvertime || 0,
+      isVacation: !!entry.isVacation
     }))
   };
 
@@ -154,7 +173,8 @@ export async function importBackup(state, file) {
       isNightShift: !!entry.isNightShift,
       isTravelTime: !!entry.isTravelTime,
       travelRegular: snapHours(Number(entry.travelRegular) || 0),
-      travelOvertime: snapHours(Number(entry.travelOvertime) || 0)
+      travelOvertime: snapHours(Number(entry.travelOvertime) || 0),
+      isVacation: !!entry.isVacation
     };
   });
 

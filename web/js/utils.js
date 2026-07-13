@@ -42,6 +42,36 @@ export function dayOffSummary(count) {
   return `${count} ${dayOffPhrase(count)}`;
 }
 
+export function vacationDayPhrase(count) {
+  return count === 1 ? 'vac day' : 'vac days';
+}
+
+export function isElapsedDay(date) {
+  return startOfDay(date) <= startOfDay(new Date());
+}
+
+export function isElapsedEntry(entry) {
+  return isElapsedDay(parseDayKey(entry.date));
+}
+
+export function workEntries(items) {
+  return items.filter((entry) => !entry.isVacation && entry.hours > 0 && isElapsedEntry(entry));
+}
+
+export function vacationEntries(items) {
+  return items.filter((entry) => !!entry.isVacation && isElapsedEntry(entry));
+}
+
+export function yearMonthHintSummary(items, dayOffCount) {
+  const work = workEntries(items);
+  const vacations = vacationEntries(items).length;
+  let text = `${formatHours(sumHours(work), 1)} hrs · ${dayOffSummary(dayOffCount)}`;
+  if (vacations > 0) {
+    text += ` · ${vacations} ${vacationDayPhrase(vacations)}`;
+  }
+  return text;
+}
+
 export function isSameDay(a, b) {
   return dayKey(a) === dayKey(b);
 }
@@ -137,23 +167,30 @@ export function entryHasOvertime(entry) {
 }
 
 export function isDayOff(date, entry) {
+  if (entry?.isVacation) return false;
   const day = startOfDay(date);
   const today = startOfDay(new Date());
   if (entry) return entry.hours === 0 && day <= today;
   return day < today;
 }
 
+export function isDayOffForCount(date, entry) {
+  if (entry?.isVacation) return false;
+  if (!isElapsedDay(date)) return false;
+  if (entry) return entry.hours === 0;
+  return true;
+}
+
 export function dayOffCountInMonth(monthDate, entriesByDay) {
   const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
   const last = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-  const today = startOfDay(new Date());
   let count = 0;
 
   for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
     const day = startOfDay(d);
-    if (day > today) continue;
+    if (!isElapsedDay(day)) continue;
     const entry = entriesByDay[dayKey(day)];
-    if (isDayOff(day, entry)) count += 1;
+    if (isDayOffForCount(day, entry)) count += 1;
   }
 
   return count;
@@ -180,6 +217,35 @@ export function entriesInWeek(date, entriesByDay) {
 
 export function sumHours(items) {
   return items.reduce((total, entry) => total + entry.hours, 0);
+}
+
+export function projectDayCountInMonth(monthDate, entriesByDay) {
+  const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const last = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+  let count = 0;
+
+  for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+    const day = startOfDay(d);
+    if (!isElapsedDay(day)) continue;
+    const entry = entriesByDay[dayKey(day)];
+    if (entry?.isVacation) continue;
+    count += 1;
+  }
+
+  return count;
+}
+
+export function projectDayCountInYear(year, entriesByDay) {
+  let count = 0;
+  for (let month = 0; month < 12; month += 1) {
+    count += projectDayCountInMonth(new Date(year, month, 1), entriesByDay);
+  }
+  return count;
+}
+
+export function projectDaysHoursSummary(dayCount, items) {
+  const work = workEntries(items);
+  return `${dayCount} ${dayCount === 1 ? 'day' : 'days'} · ${formatHours(sumHours(work), 1)} hrs`;
 }
 
 export function sumRegular(items) {
