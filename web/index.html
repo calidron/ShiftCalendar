@@ -13,8 +13,13 @@
     <title>ShiftCalendar</title>
   </head>
   <body>
+    <noscript>
+      <p style="padding:16px;font-family:-apple-system,sans-serif">ShiftCalendar requires JavaScript. Enable it in Safari settings and reload.</p>
+    </noscript>
     <div class="app-shell">
-      <main id="panel-calendar" class="panel active"></main>
+      <main id="panel-calendar" class="panel active">
+        <p id="boot-fallback" style="padding:16px;color:#6b7280;font-size:0.9rem">Loading ShiftCalendar…</p>
+      </main>
       <main id="panel-summary" class="panel"></main>
       <main id="panel-settings" class="panel"></main>
     </div>
@@ -51,5 +56,15 @@
     <div id="modal-root"></div>
 
     <script type="module" src="js/app.js"></script>
+    <script>
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const boot = document.getElementById('boot-fallback');
+          if (!boot) return;
+          boot.textContent = 'Could not load ShiftCalendar. Pull down to refresh. If it persists, clear Safari website data for this site and reload.';
+          boot.style.color = '#ef4444';
+        }, 8000);
+      });
+    </script>
   </body>
 </html>

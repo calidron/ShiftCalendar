@@ -131,6 +131,7 @@ const state = {
 };
 
 function renderAll() {
+  document.getElementById('boot-fallback')?.remove();
   applyTheme();
   renderCalendar();
   renderSummary();
