@@ -4,6 +4,7 @@ import {
   formatHours,
   hourWord,
   dayOffSummary,
+  yearMonthHintSummary,
   isSameWeek,
   weekStart,
   shiftWeek,
@@ -18,6 +19,9 @@ import {
   dayOffCountInYear,
   entriesInWeek,
   sumHours,
+  projectDayCountInMonth,
+  projectDayCountInYear,
+  projectDaysHoursSummary,
   sumRegular,
   sumOvertime,
   overtimeHours,
@@ -77,13 +81,25 @@ function iconTravelTime(className = 'tab-icon') {
   </svg>`;
 }
 
-function dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel }) {
+function iconVacation(className = 'tab-icon') {
+  return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M8 9.5V7A2 2 0 0 1 10 5h4a2 2 0 0 1 2 2v2.5"></path>
+    <rect x="4.5" y="9.5" width="15" height="11.5" rx="2"></rect>
+    <line x1="9" y1="9.5" x2="9" y2="21"></line>
+    <line x1="15" y1="9.5" x2="15" y2="21"></line>
+    <circle cx="7.5" cy="22" r="1.35"></circle>
+    <circle cx="16.5" cy="22" r="1.35"></circle>
+  </svg>`;
+}
+
+function dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, isVacation }) {
   const classes = ['day-cell'];
   if (today) classes.push('today');
   if (outside) classes.push('outside-month');
   if (multi) classes.push('multi-selected');
-  if (off) classes.push('day-off');
-  if (hours > 0) {
+  if (isVacation) classes.push('vacation-shift');
+  else if (off) classes.push('day-off');
+  else if (hours > 0) {
     if (isTravel) classes.push('has-hours', 'travel-shift');
     else classes.push('has-hours', isNight ? 'night-shift' : 'day-shift');
   }
@@ -214,6 +230,7 @@ function renderCalendar() {
         <span class="legend-item"><span class="dot" style="background:var(--day)"></span>Day shift</span>
         <span class="legend-item"><span class="dot" style="background:var(--night)"></span>Night shift</span>
         <span class="legend-item"><span class="dot" style="background:var(--travel)"></span>Travel time</span>
+        <span class="legend-item"><span class="dot" style="background:var(--vacation)"></span>Vacation</span>
         <span class="legend-item"><span class="dot day-off-dot"></span>Day off</span>
         ${state.selectMode ? '<span class="legend-item"><span class="dot" style="background:#2563eb"></span>Selected</span>' : ''}
       </div>
@@ -254,6 +271,7 @@ function renderDayCell(day, entries, index, month) {
   const hours = entry?.hours || 0;
   const isNight = !!entry?.isNightShift;
   const isTravel = !!entry?.isTravelTime;
+  const isVacation = !!entry?.isVacation;
   const hasNotes = !!entry?.notes;
   const today = dayKey(day) === dayKey(new Date());
   const outside = day.getMonth() !== month.getMonth();
@@ -261,7 +279,9 @@ function renderDayCell(day, entries, index, month) {
   const off = isDayOff(day, entry);
 
   let badge = '<span style="height:12px"></span>';
-  if (hours > 0) {
+  if (isVacation) {
+    badge = '<span class="badge vacation">vac</span>';
+  } else if (hours > 0) {
     badge = `<span class="badge ${shiftBadgeClass(isTravel, isNight)}">${formatHours(hours, 1)}</span>`;
   } else if (off) {
     badge = '<span class="badge off">off</span>';
@@ -269,7 +289,7 @@ function renderDayCell(day, entries, index, month) {
 
   return `
     <div
-      class="${dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel })}"
+      class="${dayCellClasses({ today, outside, multi, off, hours, isNight, isTravel, isVacation })}"
       data-day="${key}"
       data-index="${index}"
       role="button"
@@ -336,32 +356,32 @@ function renderSummary() {
       <section>
         <h2 class="section-title">Totals</h2>
         <div class="list-card">
-          ${summaryRow(monthLabel(state.summaryMonth), `${formatHours(sumHours(monthItems), 1)} hrs`)}
-          ${summaryRow(String(state.summaryMonth.getFullYear()), `${formatHours(sumHours(yearItems), 1)} hrs`)}
+          ${summaryRow(monthLabel(state.summaryMonth), projectDaysHoursSummary(projectDayCountInMonth(state.summaryMonth, state.data.entries), monthItems), '', { digitsOnly: true })}
+          ${summaryRow(String(state.summaryMonth.getFullYear()), projectDaysHoursSummary(projectDayCountInYear(state.summaryMonth.getFullYear(), state.data.entries), yearItems), '', { digitsOnly: true })}
         </div>
       </section>
 
       <section>
         <h2 class="section-title">Regular Hours</h2>
         <div class="list-card">
-          ${summaryRow(monthLabel(state.summaryMonth), `${formatHours(sumRegular(monthItems), 1)} hrs`, 'green')}
-          ${summaryRow(String(state.summaryMonth.getFullYear()), `${formatHours(sumRegular(yearItems), 1)} hrs`, 'green')}
+          ${summaryRow(monthLabel(state.summaryMonth), `${formatHours(sumRegular(monthItems), 1)} hrs`, 'green', { digitsOnly: true })}
+          ${summaryRow(String(state.summaryMonth.getFullYear()), `${formatHours(sumRegular(yearItems), 1)} hrs`, 'green', { digitsOnly: true })}
         </div>
       </section>
 
       <section>
         <h2 class="section-title">Overtime</h2>
         <div class="list-card">
-          ${summaryRow(monthLabel(state.summaryMonth), `${formatHours(sumOvertime(monthItems), 1)} hrs`, 'red')}
-          ${summaryRow(String(state.summaryMonth.getFullYear()), `${formatHours(sumOvertime(yearItems), 1)} hrs`, 'red')}
+          ${summaryRow(monthLabel(state.summaryMonth), `${formatHours(sumOvertime(monthItems), 1)} hrs`, 'red', { digitsOnly: true })}
+          ${summaryRow(String(state.summaryMonth.getFullYear()), `${formatHours(sumOvertime(yearItems), 1)} hrs`, 'red', { digitsOnly: true })}
         </div>
       </section>
 
       <section>
         <h2 class="section-title">Days Off</h2>
         <div class="list-card">
-          ${summaryRow(monthLabel(state.summaryMonth), `${dayOffCountInMonth(state.summaryMonth, state.data.entries)} days`)}
-          ${summaryRow(String(state.summaryMonth.getFullYear()), `${dayOffCountInYear(state.summaryMonth.getFullYear(), state.data.entries)} days`)}
+          ${summaryRow(monthLabel(state.summaryMonth), `${dayOffCountInMonth(state.summaryMonth, state.data.entries)} days`, '', { digitsOnly: true })}
+          ${summaryRow(String(state.summaryMonth.getFullYear()), `${dayOffCountInYear(state.summaryMonth.getFullYear(), state.data.entries)} days`, '', { digitsOnly: true })}
         </div>
       </section>
 
@@ -385,11 +405,16 @@ function overtimeHintHtml(hours) {
   return `<span class="overtime-hint-num">${regular}</span> ${hourWord(regularAmount)} regular + <span class="overtime-hint-num overtime-hint-ot">${overtime}</span> ${hourWord(overtimeAmount)} overtime`;
 }
 
-function summaryRow(title, value, tone = '') {
+function summaryRow(title, value, tone = '', { digitsOnly = false } = {}) {
+  if (digitsOnly) {
+    const display = value.replace(/([\d.]+)/g, '<strong class="summary-num">$1</strong>');
+    return `<div class="list-row spread"><span>${title}</span><span class="summary-value ${tone}">${display}</span></div>`;
+  }
+
   const display = value.endsWith(' hrs')
-    ? `<span class="summary-num">${value.slice(0, -4)}</span><span class="summary-unit"> hrs</span>`
+    ? `<strong class="summary-num">${value.slice(0, -4)}</strong><span class="summary-unit"> hrs</span>`
     : value;
-  return `<div class="list-row spread"><span>${title}</span><strong class="summary-value ${tone}">${display}</strong></div>`;
+  return `<div class="list-row spread"><span>${title}</span><span class="summary-value ${tone}">${display}</span></div>`;
 }
 
 function entryRow(entry) {
@@ -398,7 +423,7 @@ function entryRow(entry) {
   return `
     <div class="list-row">
       <div>
-        <div class="entry-title">${date}${entry.notes ? ' *' : ''}${entry.isNightShift ? `<span class="night-shift-mark">${iconNightShift('legend-icon')}</span>` : ''}${entry.isTravelTime ? `<span class="travel-shift-mark">${iconTravelTime('legend-icon')}</span>` : ''}</div>
+        <div class="entry-title">${date}${entry.notes ? ' *' : ''}${entry.isNightShift ? `<span class="night-shift-mark">${iconNightShift('legend-icon')}</span>` : ''}${entry.isTravelTime ? `<span class="travel-shift-mark">${iconTravelTime('legend-icon')}</span>` : ''}${entry.isVacation ? `<span class="vacation-mark">${iconVacation('legend-icon')}</span>` : ''}</div>
         ${entry.notes ? `<div class="meta">${escapeHtml(entry.notes)}</div>` : ''}
       </div>
       <div style="text-align:right">
@@ -488,6 +513,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   let notes = '';
   let isNightShift = nightShiftDefault(state.data, primary);
   let isTravelTime = false;
+  let isVacation = false;
   let travelRegular = regularHours(hours);
   let travelOvertime = overtimeHours(hours);
 
@@ -496,6 +522,12 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
     notes = existing.notes;
     isNightShift = existing.isNightShift;
     isTravelTime = !!existing.isTravelTime;
+    isVacation = !!existing.isVacation;
+    if (isVacation) {
+      isNightShift = false;
+      isTravelTime = false;
+      hours = 0;
+    }
     travelRegular = isTravelTime ? (existing.travelRegular || 0) : regularHours(hours);
     travelOvertime = isTravelTime ? (existing.travelOvertime || 0) : overtimeHours(hours);
   }
@@ -511,7 +543,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   };
 
   ui.modalRoot.innerHTML = `
-    <div class="modal-backdrop open log-modal ${isNightShift ? 'shift-night' : 'shift-day'}${isTravelTime ? ' travel-mode' : ''}" data-modal="log">
+    <div class="modal-backdrop open log-modal ${isNightShift ? 'shift-night' : 'shift-day'}${isTravelTime ? ' travel-mode' : ''}${isVacation ? ' vacation-mode' : ''}" data-modal="log">
       <div class="modal-sheet">
         <div class="modal-header">
           <strong>${bulk ? `Fill ${list.length} days` : parseDayKey(dayKey(primary)).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' })}</strong>
@@ -521,9 +553,10 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
         <div class="form-group toggle-row">
           <button class="chip-btn night-toggle ${isNightShift ? 'active' : ''}" data-action="toggle-night" type="button">${iconNightShift()} Night Shift</button>
           <button class="chip-btn travel-toggle ${isTravelTime ? 'active' : ''}" data-action="toggle-travel" type="button">${iconTravelTime()} Travel Time</button>
+          <button class="chip-btn vacation-toggle ${isVacation ? 'active' : ''}" data-action="toggle-vacation" type="button">${iconVacation()} Vacation</button>
         </div>
 
-        <div id="hours-single-panel" class="hours-single-panel"${isTravelTime ? ' hidden' : ''}>
+        <div id="hours-single-panel" class="hours-single-panel"${isTravelTime || isVacation ? ' hidden' : ''}>
           <div class="form-group hours-worked-group">
             <label>Hours Worked</label>
             <div class="range-row">
@@ -547,7 +580,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
           </div>
         </div>
 
-        <div id="hours-split-panel" class="hours-split-panel"${isTravelTime ? '' : ' hidden'}>
+        <div id="hours-split-panel" class="hours-split-panel"${isTravelTime && !isVacation ? '' : ' hidden'}>
           ${splitHoursFieldHtml('regular-hours', 'Regular Hours', travelRegular)}
           ${splitHoursFieldHtml('overtime-hours', 'Overtime Hours', travelOvertime, 'label-overtime')}
           <p id="travel-split-hint" class="hint overtime-hint travel-split-hint">${travelSplitHintHtml(travelRegular, travelOvertime)}</p>
@@ -572,6 +605,7 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   let currentHours = hours;
   let currentNight = isNightShift;
   let currentTravel = isTravelTime;
+  let currentVacation = isVacation;
   let currentRegular = travelRegular;
   let currentOvertime = travelOvertime;
   let savedTravelRegular = travelRegular;
@@ -654,6 +688,10 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   };
 
   const setTravelMode = (enabled) => {
+    if (enabled && currentVacation) {
+      setVacationMode(false);
+    }
+
     if (!enabled) {
       savedTravelRegular = currentRegular;
       savedTravelOvertime = currentOvertime;
@@ -662,8 +700,11 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
     currentTravel = enabled;
     modal.classList.toggle('travel-mode', enabled);
     modal.querySelector('[data-action="toggle-travel"]').classList.toggle('active', enabled);
-    singlePanel.hidden = enabled;
-    splitPanel.hidden = !enabled;
+
+    if (!currentVacation) {
+      singlePanel.hidden = enabled;
+      splitPanel.hidden = !enabled;
+    }
 
     if (enabled) {
       if (savedTravelRegular + savedTravelOvertime > 0) {
@@ -673,8 +714,39 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
         savedTravelRegular = currentRegular;
         savedTravelOvertime = currentOvertime;
       }
-    } else {
+    } else if (!currentVacation) {
       syncSingleFromTravel();
+    }
+  };
+
+  const clearNightShift = () => {
+    currentNight = false;
+    modal.classList.remove('shift-night');
+    modal.classList.add('shift-day');
+    modal.querySelector('[data-action="toggle-night"]').classList.remove('active');
+  };
+
+  const clearTravelMode = () => {
+    if (!currentTravel) return;
+    currentTravel = false;
+    modal.classList.remove('travel-mode');
+    modal.querySelector('[data-action="toggle-travel"]').classList.remove('active');
+    syncSingleFromTravel();
+  };
+
+  const setVacationMode = (enabled) => {
+    currentVacation = enabled;
+    modal.classList.toggle('vacation-mode', enabled);
+    modal.querySelector('[data-action="toggle-vacation"]').classList.toggle('active', enabled);
+
+    if (enabled) {
+      clearNightShift();
+      clearTravelMode();
+      singlePanel.hidden = true;
+      splitPanel.hidden = true;
+    } else {
+      singlePanel.hidden = currentTravel;
+      splitPanel.hidden = !currentTravel;
     }
   };
 
@@ -703,7 +775,9 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
     }
 
     if (action === 'toggle-night') {
-      currentNight = !currentNight;
+      const nextNight = !currentNight;
+      if (nextNight && currentVacation) setVacationMode(false);
+      currentNight = nextNight;
       modal.classList.toggle('shift-night', currentNight);
       modal.classList.toggle('shift-day', !currentNight);
       modal.querySelector('[data-action="toggle-night"]').classList.toggle('active', currentNight);
@@ -712,6 +786,11 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
 
     if (action === 'toggle-travel') {
       setTravelMode(!currentTravel);
+      return;
+    }
+
+    if (action === 'toggle-vacation') {
+      setVacationMode(!currentVacation);
       return;
     }
 
@@ -746,32 +825,53 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
     }
 
     if (action === 'save-entry') {
-      if (currentTravel) {
-        commitRegularInput();
-        commitOvertimeInput();
+      const notes = modal.querySelector('#notes-input').value.trim();
+      let payload;
+
+      if (currentVacation) {
+        payload = {
+          isVacation: true,
+          isTravelTime: false,
+          isNightShift: false,
+          hours: 0,
+          travelRegular: 0,
+          travelOvertime: 0,
+          notes
+        };
       } else {
-        commitHoursInput();
+        if (currentTravel) {
+          commitRegularInput();
+          commitOvertimeInput();
+        } else {
+          commitHoursInput();
+        }
+
+        payload = currentTravel
+          ? {
+              isTravelTime: true,
+              travelRegular: currentRegular,
+              travelOvertime: currentOvertime,
+              hours: snapHours(currentRegular + currentOvertime),
+              notes,
+              isNightShift: currentNight,
+              isVacation: false
+            }
+          : {
+              isTravelTime: false,
+              hours: currentHours,
+              notes,
+              isNightShift: currentNight,
+              isVacation: false
+            };
       }
 
-      const payload = currentTravel
-        ? {
-            isTravelTime: true,
-            travelRegular: currentRegular,
-            travelOvertime: currentOvertime,
-            hours: snapHours(currentRegular + currentOvertime),
-            notes: modal.querySelector('#notes-input').value.trim(),
-            isNightShift: currentNight
-          }
-        : {
-            isTravelTime: false,
-            hours: currentHours,
-            notes: modal.querySelector('#notes-input').value.trim(),
-            isNightShift: currentNight
-          };
-
       list.forEach((date) => upsertEntry(state.data, date, payload));
-      saveLastHours(state.data, payload.hours);
-      carryNightShiftToNextDay(state.data, list[list.length - 1], currentNight);
+      if (!currentVacation) {
+        saveLastHours(state.data, payload.hours);
+        carryNightShiftToNextDay(state.data, list[list.length - 1], currentNight);
+      } else {
+        carryNightShiftToNextDay(state.data, list[list.length - 1], false);
+      }
 
       state.selectMode = false;
       state.multiSelected.clear();
@@ -899,7 +999,7 @@ function renderYearMonths(year) {
       <section class="month-block">
         <button class="row spread" data-month="${year}-${month}" type="button" style="width:100%;border:none;background:transparent;color:inherit;padding:0;margin-bottom:8px;cursor:pointer">
           <strong>${monthLabel(monthDate)}</strong>
-          <span class="hint">${formatHours(sumHours(items), 1)} hrs · ${dayOffSummary(dayoffs)}</span>
+          <span class="hint">${yearMonthHintSummary(items, dayoffs)}</span>
         </button>
         <div class="compact-grid">
           ${days.map((day) => {
@@ -910,12 +1010,15 @@ function renderYearMonths(year) {
             const hours = entry?.hours || 0;
             const off = isDayOff(day, entry);
             const isTravel = !!entry?.isTravelTime;
-            const badge = hours > 0
+            const isVacation = !!entry?.isVacation;
+            const badge = isVacation
+              ? '<span class="badge vacation">vac</span>'
+              : hours > 0
               ? `<span class="badge ${shiftBadgeClass(isTravel, !!entry?.isNightShift)}">${formatHours(hours, 1)}</span>`
               : (off ? '<span class="badge off">off</span>' : '');
             return `
               <div
-                class="${dayCellClasses({ today: false, outside: false, multi: false, off, hours, isNight: !!entry?.isNightShift, isTravel })}"
+                class="${dayCellClasses({ today: false, outside: false, multi: false, off, hours, isNight: !!entry?.isNightShift, isTravel, isVacation })}"
                 data-year-day="${key}"
                 role="button"
                 tabindex="0"

@@ -9,6 +9,7 @@
   --day: #f97316;
   --night: #6366f1;
   --travel: #06b6d4;
+  --vacation: #ec4899;
   --danger: #ef4444;
   --week-row: rgba(120, 120, 128, 0.16);
   --off: #d1d5db;
@@ -301,6 +302,11 @@ textarea {
   border-color: color-mix(in srgb, var(--travel) 35%, transparent);
 }
 
+.day-cell.vacation-shift {
+  background: color-mix(in srgb, var(--vacation) 18%, transparent);
+  border-color: color-mix(in srgb, var(--vacation) 35%, transparent);
+}
+
 .day-cell.today.has-hours {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
   border-color: var(--accent);
@@ -342,6 +348,10 @@ textarea {
 
 .badge.travel {
   background: var(--travel);
+}
+
+.badge.vacation {
+  background: var(--vacation);
 }
 
 .badge.off {
@@ -405,6 +415,12 @@ textarea {
   display: inline-flex;
   align-items: center;
   color: var(--travel);
+}
+
+.vacation-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--vacation);
 }
 
 .stat-grid {
@@ -472,25 +488,21 @@ textarea {
 
 .list-row .summary-value {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 
-.list-row .summary-value.green {
+.list-row .summary-value .summary-num {
+  font-weight: 700;
+}
+
+.list-row .summary-value.green .summary-num {
   color: #22c55e;
 }
 
-.list-row .summary-value.green .summary-unit {
-  color: var(--text);
-}
-
-.list-row .summary-value.red {
+.list-row .summary-value.red .summary-num {
   color: var(--danger);
-}
-
-.list-row .summary-value.red .summary-unit {
-  color: var(--text);
 }
 
 .tabbar {
@@ -651,7 +663,22 @@ textarea {
   border: 1px solid color-mix(in srgb, var(--travel) 35%, transparent);
 }
 
-.chip-btn.travel-toggle .tab-icon {
+.chip-btn.vacation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+}
+
+.log-modal .chip-btn.vacation-toggle.active {
+  background: color-mix(in srgb, var(--vacation) 16%, transparent);
+  color: var(--vacation);
+  border: 1px solid color-mix(in srgb, var(--vacation) 35%, transparent);
+}
+
+.chip-btn.night-toggle .tab-icon,
+.chip-btn.travel-toggle .tab-icon,
+.chip-btn.vacation-toggle .tab-icon {
   width: 18px;
   height: 18px;
 }
@@ -784,6 +811,23 @@ textarea {
   --log-accent: var(--night);
 }
 
+.log-modal.vacation-mode {
+  --log-accent: var(--vacation);
+}
+
+.log-modal.vacation-mode .hours-single-panel,
+.log-modal.vacation-mode .hours-split-panel {
+  display: none;
+}
+
+.log-modal.vacation-mode .hours-input {
+  color: var(--vacation);
+}
+
+.log-modal.vacation-mode .hours-input:focus {
+  background: color-mix(in srgb, var(--vacation) 12%, transparent);
+}
+
 .log-modal.shift-day .overtime-hint {
   color: var(--day);
 }
@@ -834,11 +878,6 @@ textarea {
   align-items: center;
   gap: 8px;
   border: 1px solid transparent;
-}
-
-.chip-btn.night-toggle .tab-icon {
-  width: 18px;
-  height: 18px;
 }
 
 .legend-icon {
