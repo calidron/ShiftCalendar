@@ -16,7 +16,6 @@ import {
   daysInMonthGrid,
   isDayOff,
   dayOffCountInMonth,
-  dayOffCountInYear,
   daysOffAndVacCountInMonth,
   daysOffAndVacCountInYear,
   entriesInWeek,
@@ -985,7 +984,7 @@ function renderYearSummary(year) {
       ${statBox('Total', formatHours(sumHours(yearItems), 1))}
       ${statBox('Regular', formatHours(sumRegular(yearItems), 1), 'green')}
       ${statBox('Overtime', formatHours(sumOvertime(yearItems), 1), 'red')}
-      ${statBox('Days Off', String(dayOffCountInYear(year, state.data.entries)))}
+      ${statBox('Days Off', String(daysOffAndVacCountInYear(year, state.data.entries)))}
     </div>
   `;
 }
