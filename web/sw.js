@@ -1,6 +1,5 @@
-const CACHE = 'shiftcalendar-v70';
+const CACHE = 'shiftcalendar-v71';
 const ASSETS = [
-  './',
   './index.html',
   './manifest.json',
   './css/app.css',
@@ -13,7 +12,9 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).catch(() => {})
+  );
   self.skipWaiting();
 });
 
@@ -26,22 +27,43 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+function isAppShellRequest(request) {
+  if (request.mode === 'navigate') return true;
+  const { pathname } = new URL(request.url);
+  return /\.(html|css|js|json)$/.test(pathname);
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return (await caches.match(request)) || Response.error();
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(CACHE);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || network;
-    })
+    isAppShellRequest(event.request)
+      ? networkFirst(event.request)
+      : cacheFirst(event.request)
   );
 });
