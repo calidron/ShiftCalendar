@@ -552,17 +552,22 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
   }
 
   const dismiss = (changed = false) => {
-    ui.modalRoot.innerHTML = '';
+    ui.modalRoot.querySelector('[data-modal="log"]')?.remove();
+
     if (returnToYearView) {
-      if (changed) renderAll();
-      openYearModal({ restoreScroll: true });
+      if (changed) {
+        renderAll();
+        openYearModal({ restoreScroll: true });
+      }
       return;
     }
+
+    ui.modalRoot.innerHTML = '';
     if (changed) renderAll();
   };
 
-  ui.modalRoot.innerHTML = `
-    <div class="modal-backdrop open log-modal ${isNightShift ? 'shift-night' : 'shift-day'}${isTravelTime ? ' travel-mode' : ''}${isVacation ? ' vacation-mode' : ''}" data-modal="log">
+  const logMarkup = `
+    <div class="modal-backdrop open log-modal${returnToYearView ? ' modal-stacked' : ''} ${isNightShift ? 'shift-night' : 'shift-day'}${isTravelTime ? ' travel-mode' : ''}${isVacation ? ' vacation-mode' : ''}" data-modal="log">
       <div class="modal-sheet">
         <div class="modal-header">
           <strong>${bulk ? `Fill ${list.length} days` : parseDayKey(dayKey(primary)).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' })}</strong>
@@ -619,6 +624,12 @@ function openLogModal(dates, { returnToYearView = false } = {}) {
       </div>
     </div>
   `;
+
+  if (returnToYearView) {
+    ui.modalRoot.insertAdjacentHTML('beforeend', logMarkup);
+  } else {
+    ui.modalRoot.innerHTML = logMarkup;
+  }
 
   const modal = ui.modalRoot.querySelector('[data-modal="log"]');
   let currentHours = hours;
