@@ -161,6 +161,18 @@ textarea {
   text-align: center;
 }
 
+.year-link {
+  border: none;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 14px;
+}
+
 .month-header {
   align-items: center;
   margin-bottom: 4px;
@@ -206,16 +218,6 @@ textarea {
 
 .week-picker-jump {
   color: var(--accent);
-}
-
-.year-link {
-  border: none;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 1.35rem;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 .weekdays,
@@ -299,18 +301,9 @@ textarea {
   border-color: color-mix(in srgb, var(--travel) 35%, transparent);
 }
 
-.day-cell.has-hours.overtime {
-  border: 2px dotted var(--danger);
-}
-
 .day-cell.today.has-hours {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
   border-color: var(--accent);
-}
-
-.day-cell.today.has-hours.overtime {
-  border: 2px dotted var(--danger);
-  box-shadow: none;
 }
 
 .day-cell.outside-month .day-number {
@@ -347,8 +340,8 @@ textarea {
   background: var(--night);
 }
 
-.badge.overtime {
-  box-shadow: inset 0 0 0 1.5px var(--danger);
+.badge.travel {
+  background: var(--travel);
 }
 
 .badge.off {

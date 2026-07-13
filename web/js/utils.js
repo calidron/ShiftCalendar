@@ -33,6 +33,15 @@ export function hourWord(hours) {
   return Number(formatHours(hours, 1)) === 1 ? 'hour' : 'hours';
 }
 
+export function dayOffPhrase(count) {
+  return count === 1 ? 'day off' : 'days off';
+}
+
+export function dayOffSummary(count) {
+  if (!count) return 'no days off';
+  return `${count} ${dayOffPhrase(count)}`;
+}
+
 export function isSameDay(a, b) {
   return dayKey(a) === dayKey(b);
 }
