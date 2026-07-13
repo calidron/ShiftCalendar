@@ -1,10 +1,11 @@
-const CACHE = 'shiftcalendar-v71';
+const CACHE = 'shiftcalendar-v72';
 const ASSETS = [
   './index.html',
   './manifest.json',
   './css/app.css',
   './js/utils.js',
   './js/store.js',
+  './js/analytics.js',
   './js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -60,6 +61,9 @@ async function cacheFirst(request) {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const { hostname } = new URL(event.request.url);
+  if (hostname === 'gc.zgo.at' || hostname.endsWith('.goatcounter.com')) return;
 
   event.respondWith(
     isAppShellRequest(event.request)
