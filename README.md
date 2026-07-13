@@ -1,6 +1,6 @@
 # ShiftCalendar
 
-Shift timesheet calendar PWA — log hours, track overtime, day/night shifts, travel time and export backups.
+Shift timesheet calendar PWA — log hours, track overtime, day/night shifts, travel time, vacation and export backups.
 
 **Live app:** https://calidron.github.io/ShiftCalendar/
 
