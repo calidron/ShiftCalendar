@@ -62,6 +62,10 @@ export function vacationEntries(items) {
   return items.filter((entry) => !!entry.isVacation && isElapsedEntry(entry));
 }
 
+export function nightShiftEntries(items) {
+  return items.filter((entry) => !!entry.isNightShift && !entry.isVacation && isElapsedEntry(entry));
+}
+
 export function yearMonthHintSummary(items, dayOffCount) {
   const work = workEntries(items);
   const vacations = vacationEntries(items).length;

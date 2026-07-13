@@ -18,6 +18,7 @@ import {
   dayOffCountInMonth,
   daysOffAndVacCountInMonth,
   daysOffAndVacCountInYear,
+  nightShiftEntries,
   entriesInWeek,
   sumHours,
   projectDayCountInMonth,
@@ -346,10 +347,12 @@ function renderSummary() {
   const monthItems = filterEntriesByMonth(state.data.entries, state.summaryMonth);
   const yearItems = filterEntriesByYear(state.data.entries, state.summaryMonth);
   const entries = allEntriesSorted(state.data);
+  const nightShiftMonthCount = nightShiftEntries(monthItems).length;
+  const nightShiftYearCount = nightShiftEntries(yearItems).length;
 
   ui.summary.innerHTML = `
-    <div class="stack" id="summary-swipe-area">
-      <div class="row spread month-header">
+    <div class="stack">
+      <div id="summary-swipe-area" class="row spread month-header">
         <button class="icon-btn" data-action="summary-prev-month" aria-label="Previous month">${iconChevron('left')}</button>
         <div class="month-title">${monthYearLabel(state.summaryMonth)}</div>
         <button class="icon-btn" data-action="summary-next-month" aria-label="Next month">${iconChevron('right')}</button>
@@ -386,6 +389,16 @@ function renderSummary() {
           ${summaryRow(String(state.summaryMonth.getFullYear()), `${daysOffAndVacCountInYear(state.summaryMonth.getFullYear(), state.data.entries)} days`, '', { digitsOnly: true })}
         </div>
       </section>
+
+      ${nightShiftYearCount > 0 ? `
+      <section>
+        <h2 class="section-title">Night Shifts</h2>
+        <div class="list-card">
+          ${summaryRow(monthLabel(state.summaryMonth), `${nightShiftMonthCount} days`, '', { digitsOnly: true })}
+          ${summaryRow(String(state.summaryMonth.getFullYear()), `${nightShiftYearCount} days`, '', { digitsOnly: true })}
+        </div>
+      </section>
+      ` : ''}
 
       <section>
         <h2 class="section-title">All Entries</h2>
