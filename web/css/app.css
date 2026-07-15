@@ -90,15 +90,15 @@ textarea {
 .panel#panel-settings.active {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   height: calc(100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  overflow: hidden;
+  overflow: visible;
 }
 
 .settings-stack {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: visible;
+  overflow: visible;
 }
 
 .settings-footer {
