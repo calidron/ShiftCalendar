@@ -50,6 +50,14 @@ export function isElapsedDay(date) {
   return startOfDay(date) <= startOfDay(new Date());
 }
 
+export function isFutureMonth(monthDate) {
+  const now = new Date();
+  return (
+    monthDate.getFullYear() > now.getFullYear()
+    || (monthDate.getFullYear() === now.getFullYear() && monthDate.getMonth() > now.getMonth())
+  );
+}
+
 export function isElapsedEntry(entry) {
   return isElapsedDay(parseDayKey(entry.date));
 }

@@ -12,6 +12,7 @@ import {
   weekRangeLabel,
   monthYearLabel,
   monthLabel,
+  isFutureMonth,
   isCurrentWeek,
   daysInMonthGrid,
   isDayOff,
@@ -1027,12 +1028,15 @@ function renderYearMonths(year) {
     const items = filterEntriesByMonth(state.data.entries, monthDate);
     const dayoffs = dayOffCountInMonth(monthDate, state.data.entries);
     const days = daysInMonthGrid(monthDate);
+    const monthHint = isFutureMonth(monthDate) && !items.length
+      ? ''
+      : yearMonthHintSummary(items, dayoffs);
 
     html += `
       <section class="month-block">
         <button class="row spread" data-month="${year}-${month}" type="button" style="width:100%;border:none;background:transparent;color:inherit;padding:0;margin-bottom:8px;cursor:pointer">
           <strong>${monthLabel(monthDate)}</strong>
-          <span class="hint">${yearMonthHintSummary(items, dayoffs)}</span>
+          ${monthHint ? `<span class="hint">${monthHint}</span>` : ''}
         </button>
         <div class="compact-grid">
           ${days.map((day) => {
