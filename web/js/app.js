@@ -34,7 +34,8 @@ import {
   filterEntriesByYear,
   REGULAR_HOURS_CAP,
   HOURS_STEP,
-  snapHours
+  snapHours,
+  hapticTap
 } from './utils.js';
 
 import {
@@ -199,6 +200,7 @@ function bindHorizontalSwipe(element, onSwipe, { disabled = () => false } = {}) 
     const delta = event.changedTouches[0].clientX - startX;
     startX = null;
     if (Math.abs(delta) < 60) return;
+    hapticTap();
     onSwipe(delta < 0 ? 1 : -1);
   }, { passive: true });
 }
@@ -1345,7 +1347,10 @@ function escapeHtml(value) {
 }
 
 ui.tabs.forEach((button) => {
-  button.addEventListener('click', () => setTab(button.dataset.tab));
+  button.addEventListener('click', () => {
+    if (button.dataset.tab !== activeTab()) hapticTap();
+    setTab(button.dataset.tab);
+  });
 });
 
 if ('serviceWorker' in navigator) {

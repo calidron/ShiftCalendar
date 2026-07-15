@@ -24,6 +24,16 @@ export function snapHours(hours) {
   return Math.round(hours / HOURS_STEP) * HOURS_STEP;
 }
 
+export function hapticTap() {
+  if (!('vibrate' in navigator)) return;
+
+  try {
+    navigator.vibrate(12);
+  } catch {
+    // Vibration can be blocked outside a direct user gesture.
+  }
+}
+
 export function formatHours(hours, precision = 2) {
   const snapped = snapHours(hours);
   return Number.isInteger(snapped) ? String(snapped) : snapped.toFixed(precision);
