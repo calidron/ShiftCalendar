@@ -476,9 +476,8 @@ function renderSettings() {
         <p class="hint">Export creates a JSON file with all logged shifts. Import merges entries by date.</p>
         <p id="backup-status" class="hint"></p>
       </section>
-
-      <p class="settings-footer">2026 © AU</p>
     </div>
+    <p class="settings-footer">2026 © AU</p>
   `;
 
   bindSettingsEvents();
