@@ -317,6 +317,55 @@ textarea {
   color: var(--text-muted);
 }
 
+:root.dark .day-cell:not(.empty) {
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+
+:root.dark .day-cell.today {
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface));
+  border-color: var(--accent);
+}
+
+:root.dark .day-cell.multi-selected {
+  background: color-mix(in srgb, #2563eb 42%, var(--surface)) !important;
+}
+
+:root.dark .day-cell.day-off {
+  --day-off-stripe: color-mix(in srgb, var(--text-muted) 35%, transparent);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 4px,
+      var(--day-off-stripe) 4px 5px
+    ),
+    color-mix(in srgb, var(--off) 90%, var(--surface));
+  border-color: color-mix(in srgb, var(--off) 70%, var(--text-muted));
+}
+
+:root.dark .day-cell.has-hours.day-shift {
+  background: color-mix(in srgb, var(--day) 32%, var(--surface));
+  border-color: color-mix(in srgb, var(--day) 58%, transparent);
+}
+
+:root.dark .day-cell.has-hours.night-shift {
+  background: color-mix(in srgb, var(--night) 38%, var(--surface));
+  border-color: color-mix(in srgb, var(--night) 58%, transparent);
+}
+
+:root.dark .day-cell.has-hours.travel-shift {
+  background: color-mix(in srgb, var(--travel) 38%, var(--surface));
+  border-color: color-mix(in srgb, var(--travel) 58%, transparent);
+}
+
+:root.dark .day-cell.vacation-shift {
+  background: color-mix(in srgb, var(--vacation) 38%, var(--surface));
+  border-color: color-mix(in srgb, var(--vacation) 58%, transparent);
+}
+
+:root.dark .day-cell.today.has-hours {
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface));
+}
+
 .day-number-line {
   display: flex;
   align-items: center;
