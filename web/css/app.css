@@ -47,6 +47,7 @@ body {
 }
 
 body {
+  padding-top: env(safe-area-inset-top);
   padding-bottom: calc(72px + env(safe-area-inset-bottom));
 }
 
@@ -90,13 +91,13 @@ textarea {
   display: flex;
   flex-direction: column;
   height: calc(100dvh - 72px - env(safe-area-inset-bottom));
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .settings-stack {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .settings-footer {
