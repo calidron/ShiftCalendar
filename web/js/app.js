@@ -143,7 +143,10 @@ function renderAll() {
 }
 
 function applyTheme() {
-  document.documentElement.classList.toggle('dark', !!state.data.settings.isDarkMode);
+  const dark = !!state.data.settings.isDarkMode;
+  document.documentElement.classList.toggle('dark', dark);
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.content = dark ? '#0f0f12' : '#f2f2f7';
 }
 
 function monthStart(date) {
